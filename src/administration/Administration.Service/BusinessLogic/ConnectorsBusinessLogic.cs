@@ -75,10 +75,12 @@ public class ConnectorsBusinessLogic(
         {
             throw NotFoundException.Create(AdministrationConnectorErrors.CONNECTOR_NOT_FOUND, new ErrorParameter[] { new("connectorId", connectorId.ToString()) });
         }
+
         if (!result.IsProviderCompany)
         {
             throw ForbiddenException.Create(AdministrationConnectorErrors.CONNECTOR_NOT_PROVIDER_COMPANY, new ErrorParameter[] { new("companyId", companyId.ToString()), new("connectorId", connectorId.ToString()) });
         }
+
         return result.ConnectorData;
     }
 
@@ -109,6 +111,7 @@ public class ConnectorsBusinessLogic(
         {
             throw UnexpectedConditionException.Create(AdministrationConnectorErrors.CONNECTOR_UNEXPECTED_NO_DESCRIPTION, new ErrorParameter[] { new("companyId", companyId.ToString()) });
         }
+
         await ValidateTechnicalUser(technicalUserId, companyId).ConfigureAwait(ConfigureAwaitOptions.None);
 
         var connectorRequestModel = new ConnectorRequestModel(name, connectorUrl, ConnectorTypeId.COMPANY_CONNECTOR, location, companyId, companyId, technicalUserId);
@@ -249,6 +252,7 @@ public class ConnectorsBusinessLogic(
         {
             throw ForbiddenException.Create(AdministrationConnectorErrors.CONNECTOR_NOT_PROVIDER_COMPANY_NOR_HOST, new ErrorParameter[] { new("companyId", companyId.ToString()), new("connectorId", connectorId.ToString()) });
         }
+
         if (result.ServiceAccountId.HasValue && result.UserStatusId != UserStatusId.INACTIVE)
         {
             portalRepositories.GetInstance<IUserRepository>().AttachAndModifyIdentity(result.ServiceAccountId.Value, null, i =>
@@ -316,6 +320,7 @@ public class ConnectorsBusinessLogic(
         {
             throw ForbiddenException.Create(AdministrationConnectorErrors.CONNECTOR_DELETION_FAILED_OFFER_SUBSCRIPTION, new ErrorParameter[] { new("connectorId", connectorId.ToString()), new("activeConnectorOfferSubscription", string.Join(",", activeConnectorOfferSubscription)) });
         }
+
         var assignedOfferSubscriptions = connectorOfferSubscriptions.Select(cos => cos.AssignedOfferSubscriptionIds);
         if (assignedOfferSubscriptions.Any())
         {
@@ -420,4 +425,11 @@ public class ConnectorsBusinessLogic(
     public IAsyncEnumerable<OfferSubscriptionConnectorData> GetConnectorOfferSubscriptionData(bool? connectorIdSet) =>
         portalRepositories.GetInstance<IOfferSubscriptionsRepository>()
             .GetConnectorOfferSubscriptionData(connectorIdSet, _identityData.CompanyId);
+
+    public Task<Pagination.Response<ConnectorMissingSdDocumentData>> GetConnectorsWithMissingSdDocument(int page, int size) => 
+        Pagination.CreateResponseAsync(
+            page,
+            size,
+            _settings.MaxPageSize,
+            portalRepositories.GetInstance<IConnectorsRepository>().GetConnectorsWithMissingSdDocument());
 }
