@@ -560,4 +560,24 @@ public class RegistrationController : ControllerBase
         await _logic.RetriggerDeleteCentralUser(processId).ConfigureAwait(false);
         return NoContent();
     }
+
+    /// <summary>
+    /// Triggers the process to create the missing self description documents
+    /// </summary>
+    /// <returns>NoContent</returns>
+    /// Example: POST: api/administration/registration/trigger-self-description
+    /// <response code="204">Empty response on success.</response>
+    /// <response code="404">No Process found for the processId</response>
+    [HttpPost]
+    [Authorize(Roles = "approve_new_partner")]
+    [Authorize(Policy = PolicyTypes.CompanyUser)]
+    [Route("trigger-self-description")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status404NotFound)]
+    public async Task<NoContentResult> TriggerSelfDescriptionProcess()
+    {
+        await _logic.TriggerSelfDescriptionCreation().ConfigureAwait(false);
+        return NoContent();
+    }
 }
