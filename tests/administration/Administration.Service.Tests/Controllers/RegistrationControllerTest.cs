@@ -360,4 +360,15 @@ public class RegistrationControllerTest
         A.CallTo(() => _logic.RetriggerDeleteCentralUser(processId)).MustHaveHappenedOnceExactly();
         result.Should().BeOfType<NoContentResult>();
     }
+
+    [Fact]
+    public async Task TriggerSelfDescriptionProcess_CallsExpected()
+    {
+        // Act
+        var result = await _controller.TriggerSelfDescriptionProcess();
+
+        // Assert
+        A.CallTo(() => _logic.TriggerSelfDescriptionCreation()).MustHaveHappenedOnceExactly();
+        result.Should().BeOfType<NoContentResult>();
+    }
 }

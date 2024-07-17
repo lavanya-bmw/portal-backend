@@ -1188,6 +1188,38 @@ public class ConnectorsBusinessLogicTests
 
     #endregion
 
+    #region GetConnectorsWithMissingSdDocument
+    
+    [Fact]
+    public async Task GetConnectorsWithMissingSdDocument_WithMoreData_ReturnsExpected()
+    {
+        // Arrange
+        SetupFakesForGetMissingSdDocConnectors(15);
+
+        // Act
+        var result = await _logic.GetConnectorsWithMissingSdDocument(0, 10);
+
+        // Assert
+        result.Should().NotBeNull();
+        result.Content.Count().Should().Be(10);
+    }
+
+    [Fact]
+    public async Task GetConnectorsWithMissingSdDocument_WithLessData_ReturnsExpected()
+    {
+        // Arrange
+        SetupFakesForGetMissingSdDocConnectors(7);
+
+        // Act
+        var result = await _logic.GetConnectorsWithMissingSdDocument(0, 10);
+
+        // Assert
+        result.Should().NotBeNull();
+        result.Content.Count().Should().Be(7);
+    }
+
+    #endregion
+
     #region Setup
 
     private void SetupRepositoryMethods()
@@ -1256,6 +1288,15 @@ public class ConnectorsBusinessLogicTests
     {
         A.CallTo(() => _identity.IdentityId).Returns(ServiceAccountUserId);
         A.CallTo(() => _identity.IdentityTypeId).Returns(IdentityTypeId.COMPANY_SERVICE_ACCOUNT);
+    }
+
+    private void SetupFakesForGetMissingSdDocConnectors(int count = 5)
+    {
+        var companyMissingSdDocumentData = _fixture.CreateMany<ConnectorMissingSdDocumentData>(count);
+        var paginationResult = (int skip, int take) => Task.FromResult(new Pagination.Source<ConnectorMissingSdDocumentData>(companyMissingSdDocumentData.Count(), companyMissingSdDocumentData.Skip(skip).Take(take)));
+
+        A.CallTo(() => _connectorsRepository.GetConnectorsWithMissingSdDocument())!
+            .Returns(paginationResult);
     }
 
     #endregion

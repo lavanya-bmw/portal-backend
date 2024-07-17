@@ -418,8 +418,15 @@ public class CompanyRepository(PortalDbContext context)
         skip,
         take,
         context.Companies.AsNoTracking()
-            .Where(x => x.CompanyStatusId == CompanyStatusId.ACTIVE && x.SelfDescriptionDocumentId == null)
-            .GroupBy(c => c.AddressId),
+            .Where(c => 
+                c.CompanyStatusId == CompanyStatusId.ACTIVE &&
+                c.SelfDescriptionDocumentId == null &&
+                c.CompanyApplications.Any(ca =>
+                    ca.ApplicationChecklistEntries.Any(a =>
+                        a.ApplicationChecklistEntryTypeId == ApplicationChecklistEntryTypeId.SELF_DESCRIPTION_LP &&
+                        a.ApplicationChecklistEntryStatusId != ApplicationChecklistEntryStatusId.TO_DO &&
+                        a.ApplicationChecklistEntryStatusId != ApplicationChecklistEntryStatusId.IN_PROGRESS)))
+            .GroupBy(c => c.CompanyStatusId),
         c => c.OrderByDescending(company => company.Name),
         c => new CompanyMissingSdDocumentData(
             c.Id,
@@ -428,6 +435,7 @@ public class CompanyRepository(PortalDbContext context)
 
     public Task<bool> HasAnyCompaniesWithMissingSelfDescription() =>
         context.Companies.AnyAsync(c =>
+            c.CompanyStatusId == CompanyStatusId.ACTIVE && 
             c.SelfDescriptionDocumentId == null &&
             c.CompanyApplications.Any(ca =>
                 ca.ApplicationChecklistEntries.Any(a =>
@@ -437,6 +445,7 @@ public class CompanyRepository(PortalDbContext context)
 
     public IAsyncEnumerable<(Guid Id, IEnumerable<(UniqueIdentifierId Id, string Value)> UniqueIdentifiers, string? BusinessPartnerNumber, string CountryCode)> GetCompaniesWithMissingSelfDescription() =>
         context.Companies.Where(c =>
+            c.CompanyStatusId == CompanyStatusId.ACTIVE && 
             c.SelfDescriptionDocumentId == null &&
             c.CompanyApplications.Any(ca =>
                 ca.ApplicationChecklistEntries.Any(a =>

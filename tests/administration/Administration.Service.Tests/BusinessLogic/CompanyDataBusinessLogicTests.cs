@@ -959,6 +959,38 @@ public class CompanyDataBusinessLogicTests
 
     #endregion
 
+    #region GetCompaniesWithMissingSdDocument
+    
+    [Fact]
+    public async Task GetCompaniesWithMissingSdDocument_WithMoreData_ReturnsExpected()
+    {
+        // Arrange
+        SetupFakesForGetMissingSdDocCompanies(15);
+
+        // Act
+        var result = await _sut.GetCompaniesWithMissingSdDocument(0, 10);
+
+        // Assert
+        result.Should().NotBeNull();
+        result.Content.Count().Should().Be(10);
+    }
+
+    [Fact]
+    public async Task GetCompaniesWithMissingSdDocument_WithLessData_ReturnsExpected()
+    {
+        // Arrange
+        SetupFakesForGetMissingSdDocCompanies(7);
+
+        // Act
+        var result = await _sut.GetCompaniesWithMissingSdDocument(0, 10);
+
+        // Assert
+        result.Should().NotBeNull();
+        result.Content.Count().Should().Be(7);
+    }
+
+    #endregion
+    
     #region DeleteCompanyCertificates
 
     [Fact]
@@ -1121,6 +1153,15 @@ public class CompanyDataBusinessLogicTests
             .ReturnsLazily(() => new ValueTuple<byte[], string, MediaTypeId, bool, bool>(content, "test.pdf", MediaTypeId.PDF, true, true));
         A.CallTo(() => _companyCertificateRepository.GetCompanyCertificateDocumentDataAsync(new Guid("aaf53459-c36b-408e-a805-0b406ce9751d"), DocumentTypeId.COMPANY_CERTIFICATE))
             .ReturnsLazily(() => new ValueTuple<byte[], string, MediaTypeId, bool, bool>(content, "test1.pdf", MediaTypeId.PDF, true, false));
+    }
+
+    private void SetupFakesForGetMissingSdDocCompanies(int count = 5)
+    {
+        var companyMissingSdDocumentData = _fixture.CreateMany<CompanyMissingSdDocumentData>(count);
+        var paginationResult = (int skip, int take) => Task.FromResult(new Pagination.Source<CompanyMissingSdDocumentData>(companyMissingSdDocumentData.Count(), companyMissingSdDocumentData.Skip(skip).Take(take)));
+
+        A.CallTo(() => _companyRepository.GetCompaniesWithMissingSdDocument())!
+            .Returns(paginationResult);
     }
 
     #endregion
